@@ -49,16 +49,17 @@
 #define k_IJKM_KEY_TBR_DEN        @"tbr_den"
 #define k_IJKM_KEY_SAR_NUM        @"sar_num"
 #define k_IJKM_KEY_SAR_DEN        @"sar_den"
+
 // stream: audio
 #define k_IJKM_KEY_SAMPLE_RATE    @"sample_rate"
 #define k_IJKM_KEY_CHANNEL_LAYOUT @"channel_layout"
 
 #define kk_IJKM_KEY_STREAMS       @"streams"
 
-typedef enum IJKLogLevel {
+typedef NS_ENUM(NSInteger, IJKLogLevel) {
     k_IJK_LOG_UNKNOWN = 0,
     k_IJK_LOG_DEFAULT = 1,
-
+    
     k_IJK_LOG_VERBOSE = 2,
     k_IJK_LOG_DEBUG   = 3,
     k_IJK_LOG_INFO    = 4,
@@ -66,76 +67,60 @@ typedef enum IJKLogLevel {
     k_IJK_LOG_ERROR   = 6,
     k_IJK_LOG_FATAL   = 7,
     k_IJK_LOG_SILENT  = 8,
-} IJKLogLevel;
+};
 
 @interface IJKFFMoviePlayerController : NSObject <IJKMediaPlayback>
 
-- (id)initWithContentURL:(NSURL *)aUrl
-             withOptions:(IJKFFOptions *)options;
+@property(nonatomic, readonly) CGFloat fpsInMeta;
+@property(nonatomic, readonly) CGFloat fpsAtOutput;
+@property(nonatomic) BOOL shouldShowHudView;
 
-- (id)initWithContentURLString:(NSString *)aUrlString
-                   withOptions:(IJKFFOptions *)options;
+@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> segmentOpenDelegate;
+@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> tcpOpenDelegate;
+@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> httpOpenDelegate;
+@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> liveOpenDelegate;
+@property (nonatomic, retain) id<IJKMediaNativeInvokeDelegate> nativeInvokeDelegate;
+
+#pragma mark KVO properties
+@property (nonatomic, readonly) IJKFFMonitor *monitor;
+
+- (instancetype)initWithContentURLString:(NSString *)aUrlString withOptions:(IJKFFOptions *)options;
+- (instancetype)initWithContentURL:(NSURL *)aUrl withOptions:(IJKFFOptions *)options;
 
 - (void)prepareToPlay;
 - (void)play;
 - (void)pause;
 - (void)stop;
 - (BOOL)isPlaying;
+- (void)didShutdown;
 
 - (void)setPauseInBackground:(BOOL)pause;
 - (BOOL)isVideoToolboxOpen;
 
+- (void)setOptionValue:(NSString *)value forKey:(NSString *)key ofCategory:(IJKFFOptionCategory)category;
+- (void)setOptionIntValue:(int64_t)value forKey:(NSString *)key ofCategory:(IJKFFOptionCategory)category;
+
+- (void)setFormatOptionValue:(NSString *)value forKey:(NSString *)key;
+- (void)setCodecOptionValue:(NSString *)value forKey:(NSString *)key;
+- (void)setSwsOptionValue:(NSString *)value forKey:(NSString *)key;
+- (void)setPlayerOptionValue:(NSString *)value forKey:(NSString *)key;
+
+- (void)setFormatOptionIntValue:(int64_t)value forKey:(NSString *)key;
+- (void)setCodecOptionIntValue:(int64_t)value forKey:(NSString *)key;
+- (void)setSwsOptionIntValue:(int64_t)value forKey:(NSString *)key;
+- (void)setPlayerOptionIntValue:(int64_t)value forKey:(NSString *)key;
+
 + (void)setLogReport:(BOOL)preferLogReport;
 + (void)setLogLevel:(IJKLogLevel)logLevel;
 + (BOOL)checkIfFFmpegVersionMatch:(BOOL)showAlert;
-+ (BOOL)checkIfPlayerVersionMatch:(BOOL)showAlert
-                            version:(NSString *)version;
-
-@property(nonatomic, readonly) CGFloat fpsInMeta;
-@property(nonatomic, readonly) CGFloat fpsAtOutput;
-@property(nonatomic) BOOL shouldShowHudView;
-
-- (void)setOptionValue:(NSString *)value
-                forKey:(NSString *)key
-            ofCategory:(IJKFFOptionCategory)category;
-
-- (void)setOptionIntValue:(int64_t)value
-                   forKey:(NSString *)key
-               ofCategory:(IJKFFOptionCategory)category;
-
-
-
-- (void)setFormatOptionValue:       (NSString *)value forKey:(NSString *)key;
-- (void)setCodecOptionValue:        (NSString *)value forKey:(NSString *)key;
-- (void)setSwsOptionValue:          (NSString *)value forKey:(NSString *)key;
-- (void)setPlayerOptionValue:       (NSString *)value forKey:(NSString *)key;
-
-- (void)setFormatOptionIntValue:    (int64_t)value forKey:(NSString *)key;
-- (void)setCodecOptionIntValue:     (int64_t)value forKey:(NSString *)key;
-- (void)setSwsOptionIntValue:       (int64_t)value forKey:(NSString *)key;
-- (void)setPlayerOptionIntValue:    (int64_t)value forKey:(NSString *)key;
-
-@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> segmentOpenDelegate;
-@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> tcpOpenDelegate;
-@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> httpOpenDelegate;
-@property (nonatomic, retain) id<IJKMediaUrlOpenDelegate> liveOpenDelegate;
-
-@property (nonatomic, retain) id<IJKMediaNativeInvokeDelegate> nativeInvokeDelegate;
-
-- (void)didShutdown;
-
-#pragma mark KVO properties
-@property (nonatomic, readonly) IJKFFMonitor *monitor;
++ (BOOL)checkIfPlayerVersionMatch:(BOOL)showAlert version:(NSString *)version;
 
 @end
 
-#define IJK_FF_IO_TYPE_READ (1)
+#define DXLive_IO_TYPE_READ (1)
 void IJKFFIOStatDebugCallback(const char *url, int type, int bytes);
 void IJKFFIOStatRegister(void (*cb)(const char *url, int type, int bytes));
 
-void IJKFFIOStatCompleteDebugCallback(const char *url,
-                                      int64_t read_bytes, int64_t total_size,
-                                      int64_t elpased_time, int64_t total_duration);
-void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
-                                            int64_t read_bytes, int64_t total_size,
-                                            int64_t elpased_time, int64_t total_duration));
+void IJKFFIOStatCompleteDebugCallback(const char *url, int64_t read_bytes, int64_t total_size, int64_t elpased_time, int64_t total_duration);
+void IJKFFIOStatCompleteRegister(void (*cb)(const char *url, int64_t read_bytes, int64_t total_size, int64_t elpased_time, int64_t total_duration));
+
